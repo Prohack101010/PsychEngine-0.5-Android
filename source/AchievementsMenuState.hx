@@ -3,7 +3,7 @@ package;
 #if desktop
 import Discord.DiscordClient;
 #end
-import flash.text.TextField;
+import openfl.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxGridOverlay;
@@ -69,6 +69,8 @@ class AchievementsMenuState extends MusicBeatState
 		descText.borderSize = 2.4;
 		add(descText);
 		changeSelection();
+
+		addVirtualPad("UP_DOWN", "A_B");
 
 		super.create();
 	}

@@ -3,7 +3,7 @@ package;
 #if desktop
 import Discord.DiscordClient;
 #end
-import flash.text.TextField;
+import openfl.text.TextField;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxGridOverlay;
@@ -66,6 +66,9 @@ class CreditsState extends MusicBeatState
 		#end
 
 		var pisspoop:Array<Array<String>> = [ //Name - Icon name - Description - Link - BG Color
+			['Android Porter'],
+			['KralOyuncu 2010x',		'KralOyuncu',		'Porter of Psych Engine 0.5 (Prerelease) Android\nCheck My Psych Android Port Collection',					'https://youtube.com/@kraloyuncurbx',	'FFBB1B'],
+			[''],
 			['Psych Engine Team'],
 			['Shadow Mario',		'shadowmario',		'Main Programmer of Psych Engine',						'https://twitter.com/Shadow_Mario_',	'FFDD33'],
 			['RiverOaken',			'riveroaken',		'Main Artist/Animator of Psych Engine',					'https://twitter.com/river_oaken',		'C30085'],
@@ -132,6 +135,9 @@ class CreditsState extends MusicBeatState
 		bg.color = getCurrentBGColor();
 		intendedColor = bg.color;
 		changeSelection();
+		#if mobile
+		addVirtualPad("UP_DOWN", "A_B");
+		#end
 		super.create();
 	}
 

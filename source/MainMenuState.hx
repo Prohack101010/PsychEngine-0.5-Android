@@ -25,7 +25,7 @@ using StringTools;
 
 class MainMenuState extends MusicBeatState
 {
-	public static var psychEngineVersion:String = '0.5b'; //This is also used for Discord RPC
+	public static var psychEngineVersion:String = '0.5b (0.5 Android)'; //This is also used for Discord RPC
 	public static var curSelected:Int = 0;
 
 	var menuItems:FlxTypedGroup<FlxSprite>;
@@ -152,6 +152,10 @@ class MainMenuState extends MusicBeatState
 		}
 		#end
 
+		#if mobile
+		addVirtualPad("UP_DOWN", "A_B_E");
+		#end
+
 		super.create();
 	}
 
@@ -250,13 +254,11 @@ class MainMenuState extends MusicBeatState
 					});
 				}
 			}
-			#if desktop
-			else if (FlxG.keys.anyJustPressed(debugKeys))
+			else if (FlxG.keys.anyJustPressed(debugKeys) #if mobile || _virtualpad.buttonE.justPressed #end)
 			{
 				selectedSomethin = true;
 				MusicBeatState.switchState(new MasterEditorMenu());
 			}
-			#end
 		}
 
 		super.update(elapsed);

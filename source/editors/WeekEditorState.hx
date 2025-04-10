@@ -24,7 +24,7 @@ import flixel.ui.FlxButton;
 import openfl.net.FileReference;
 import openfl.events.Event;
 import openfl.events.IOErrorEvent;
-import flash.net.FileFilter;
+import openfl.net.FileFilter;
 import lime.system.Clipboard;
 import haxe.Json;
 #if sys
@@ -115,6 +115,10 @@ class WeekEditorState extends MusicBeatState
 
 		FlxG.mouse.visible = true;
 
+		#if mobile
+		addVirtualPad("UP_DOWN", "B");
+		#end
+
 		super.create();
 	}
 
@@ -177,26 +181,50 @@ class WeekEditorState extends MusicBeatState
 		tab_group.name = "Week";
 		
 		songsInputText = new FlxUIInputText(10, 30, 200, '', 8);
+		#if mobile
+		songsInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(songsInputText);
 
 		opponentInputText = new FlxUIInputText(10, songsInputText.y + 40, 70, '', 8);
+		#if mobile
+		opponentInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(opponentInputText);
 		boyfriendInputText = new FlxUIInputText(opponentInputText.x + 75, opponentInputText.y, 70, '', 8);
+		#if mobile
+		boyfriendInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(boyfriendInputText);
 		girlfriendInputText = new FlxUIInputText(boyfriendInputText.x + 75, opponentInputText.y, 70, '', 8);
+		#if mobile
+		girlfriendInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(girlfriendInputText);
 
 		backgroundInputText = new FlxUIInputText(10, opponentInputText.y + 40, 120, '', 8);
+		#if mobile
+		backgroundInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(backgroundInputText);
 		
 
 		displayNameInputText = new FlxUIInputText(10, backgroundInputText.y + 60, 200, '', 8);
+		#if mobile
+		displayNameInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(backgroundInputText);
 
 		weekNameInputText = new FlxUIInputText(10, displayNameInputText.y + 60, 150, '', 8);
+		#if mobile
+		weekNameInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(weekNameInputText);
 
 		weekFileInputText = new FlxUIInputText(10, weekNameInputText.y + 40, 100, '', 8);
+		#if mobile
+		weekFileInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(weekFileInputText);
 		reloadWeekThing();
 
@@ -242,9 +270,15 @@ class WeekEditorState extends MusicBeatState
 		};
 
 		weekBeforeInputText = new FlxUIInputText(10, lockedCheckbox.y + 55, 100, '', 8);
+		#if mobile
+		weekBeforeInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(weekBeforeInputText);
 
 		difficultiesInputText = new FlxUIInputText(10, weekBeforeInputText.y + 60, 200, '', 8);
+		#if mobile
+		difficultiesInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		blockPressWhileTypingOn.push(difficultiesInputText);
 		
 		tab_group.add(new FlxText(weekBeforeInputText.x, weekBeforeInputText.y - 28, 0, 'Week File name of the Week you have\nto finish for Unlocking:'));
@@ -432,7 +466,7 @@ class WeekEditorState extends MusicBeatState
 			FlxG.sound.muteKeys = TitleState.muteKeys;
 			FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
 			FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
-			if(FlxG.keys.justPressed.ESCAPE) {
+			if(#if mobile _virtualpad.buttonB.justPressed || #end FlxG.keys.justPressed.ESCAPE) {
 				FlxG.mouse.visible = false;
 				MusicBeatState.switchState(new editors.MasterEditorMenu());
 				FlxG.sound.playMusic(Paths.music('freakyMenu'));
@@ -613,6 +647,9 @@ class WeekEditorFreeplayState extends MusicBeatState
 
 		addEditorBox();
 		changeSelection();
+		#if mobile
+		addVirtualPad("UP_DOWN", "B");
+		#end
 		super.create();
 	}
 	
@@ -707,6 +744,9 @@ class WeekEditorFreeplayState extends MusicBeatState
 		});
 
 		iconInputText = new FlxUIInputText(10, bgColorStepperR.y + 70, 100, '', 8);
+		#if mobile
+		iconInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 
 		var hideFreeplayCheckbox:FlxUICheckBox = new FlxUICheckBox(10, iconInputText.y + 30, null, null, "Hide Week from Freeplay?", 100);
 		hideFreeplayCheckbox.checked = weekFile.hideFreeplay;
@@ -795,7 +835,7 @@ class WeekEditorFreeplayState extends MusicBeatState
 			FlxG.sound.muteKeys = TitleState.muteKeys;
 			FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
 			FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
-			if(FlxG.keys.justPressed.ESCAPE) {
+			if(#if mobile _virtualpad.buttonB.justPressed || #end FlxG.keys.justPressed.ESCAPE) {
 				FlxG.mouse.visible = false;
 				MusicBeatState.switchState(new editors.MasterEditorMenu());
 				FlxG.sound.playMusic(Paths.music('freakyMenu'));

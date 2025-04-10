@@ -27,6 +27,8 @@ import flixel.ui.FlxSpriteButton;
 import openfl.net.FileReference;
 import openfl.events.Event;
 import openfl.events.IOErrorEvent;
+import openfl.events.MouseEvent;
+import openfl.geom.Point;
 import haxe.Json;
 import Character;
 import flixel.system.debug.interaction.tools.Pointer.GraphicCursorCross;
@@ -41,7 +43,7 @@ using StringTools;
 
 /**
 	*DEBUG MODE
- */
+*/
 class CharacterEditorState extends MusicBeatState
 {
 	var char:Character;
@@ -76,6 +78,9 @@ class CharacterEditorState extends MusicBeatState
 
 	var cameraFollowPointer:FlxSprite;
 	var healthBarBG:FlxSprite;
+
+	var cameraPosition:Point = new Point();
+	var isDragging:Bool = false;
 
 	override function create()
 	{
@@ -141,14 +146,20 @@ class CharacterEditorState extends MusicBeatState
 		camFollow.screenCenter();
 		add(camFollow);
 
-		var tipText:FlxText = new FlxText(FlxG.width - 20, FlxG.height, 0,
-			"E/Q - Camera Zoom In/Out
+		final buttonEQ:String = #if mobile 'X/Y' #else 'E/Q' #end;
+		final buttonR:String = #if mobile 'Z' #else 'R' #end;
+		final buttonWS:String = #if mobile 'V/D' #else 'W/S' #end;
+		final buttonT:String = #if mobile 'A' #else 'T' #end;
+		final buttonShift:String = #if mobile 'C' #else 'Shift' #end;
+
+		var tipText:FlxText = new FlxText(FlxG.width - 20, FlxG.height - 5, 0,
+			'$buttonEQ - Camera Zoom In/Out
 			\nJKLI - Move Camera
-			\nW/S - Previous/Next Animation
+			\n$buttonWS - Previous/Next Animation
 			\nSpace - Play Animation
 			\nArrow Keys - Move Character Offset
 			\nZ - Reset Current Offset
-			\nHold Shift to Move 10x faster\n", 12);
+			\nHold $buttonShift to Move 10x faster\n', 12);
 		tipText.cameras = [camHUD];
 		tipText.setFormat(null, 12, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		tipText.scrollFactor.set();
@@ -196,6 +207,15 @@ class CharacterEditorState extends MusicBeatState
 
 		FlxG.mouse.visible = true;
 		reloadCharacterOptions();
+
+		#if mobile
+		addVirtualPad("FULL", "A_B_C_D_V_X_Y_Z");
+		addVirtualPadCamera();
+
+		FlxG.stage.addEventListener(MouseEvent.MOUSE_DOWN, onMouseEvent);
+		FlxG.stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseEvent);
+		FlxG.stage.addEventListener(MouseEvent.MOUSE_UP, onMouseEvent);
+		#end
 
 		super.create();
 	}
@@ -275,6 +295,9 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.name = "Offsets";
 
 		animationInputText = new FlxUIInputText(15, 30, 100, 'idle', 8);
+		#if mobile
+		animationInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		
 		var addButton:FlxButton = new FlxButton(animationInputText.x + animationInputText.width + 23, animationInputText.y - 2, "Add", function()
 		{
@@ -391,6 +414,9 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.name = "Character";
 
 		imageInputText = new FlxUIInputText(15, 30, 200, 'characters/BOYFRIEND', 8);
+		#if mobile
+		imageInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		var reloadImage:FlxButton = new FlxButton(imageInputText.x + 210, imageInputText.y - 3, "Reload Image", function()
 		{
 			char.imageFile = imageInputText.text;
@@ -412,6 +438,9 @@ class CharacterEditorState extends MusicBeatState
 			});
 
 		healthIconInputText = new FlxUIInputText(15, imageInputText.y + 35, 75, leHealthIcon.getCharacter(), 8);
+		#if mobile
+		healthIconInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 
 		singDurationStepper = new FlxUINumericStepper(15, healthIconInputText.y + 45, 0.1, 4, 0, 999, 1);
 
@@ -490,8 +519,17 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.name = "Animations";
 		
 		animationInputText = new FlxUIInputText(15, 85, 80, '', 8);
+		#if mobile
+		animationInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		animationNameInputText = new FlxUIInputText(animationInputText.x, animationInputText.y + 35, 150, '', 8);
+		#if mobile
+		animationNameInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		animationIndicesInputText = new FlxUIInputText(animationNameInputText.x, animationNameInputText.y + 40, 250, '', 8);
+		#if mobile
+		animationIndicesInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
+		#end
 		animationNameFramerate = new FlxUINumericStepper(animationInputText.x + 170, animationInputText.y, 1, 24, 0, 240, 0);
 		animationLoopCheckBox = new FlxUICheckBox(animationNameInputText.x + 170, animationNameInputText.y - 1, null, null, "Should it Loop?", 100);
 
@@ -966,6 +1004,7 @@ class CharacterEditorState extends MusicBeatState
 		var inputTexts:Array<FlxUIInputText> = [animationInputText, imageInputText, healthIconInputText, animationNameInputText, animationIndicesInputText];
 		for (i in 0...inputTexts.length) {
 			if(inputTexts[i].hasFocus) {
+				#if !mobile
 				if(FlxG.keys.pressed.CONTROL && FlxG.keys.justPressed.V && Clipboard.text != null) { //Copy paste
 					inputTexts[i].text = ClipboardAdd(inputTexts[i].text);
 					inputTexts[i].caretIndex = inputTexts[i].text.length;
@@ -974,6 +1013,7 @@ class CharacterEditorState extends MusicBeatState
 				if(FlxG.keys.justPressed.ENTER) {
 					inputTexts[i].hasFocus = false;
 				}
+				#end
 				FlxG.sound.muteKeys = [];
 				FlxG.sound.volumeDownKeys = [];
 				FlxG.sound.volumeUpKeys = [];
@@ -986,7 +1026,7 @@ class CharacterEditorState extends MusicBeatState
 		FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
 
 		if(!charDropDown.dropPanel.visible) {
-			if (FlxG.keys.justPressed.ESCAPE) {
+			if (#if mobile _virtualpad.buttonB.justPressed || #end FlxG.keys.justPressed.ESCAPE) {
 				if(goToPlayState) {
 					MusicBeatState.switchState(new PlayState());
 				} else {
@@ -997,15 +1037,15 @@ class CharacterEditorState extends MusicBeatState
 				return;
 			}
 			
-			if (FlxG.keys.justPressed.R) {
+			if (#if mobile _virtualpad.buttonZ.justPressed || #end FlxG.keys.justPressed.R) {
 				FlxG.camera.zoom = 1;
 			}
 
-			if (FlxG.keys.pressed.E && FlxG.camera.zoom < 3) {
+			if ((#if mobile _virtualpad.buttonX.pressed || #end FlxG.keys.pressed.E) && FlxG.camera.zoom < 3) {
 				FlxG.camera.zoom += elapsed * FlxG.camera.zoom;
 				if(FlxG.camera.zoom > 3) FlxG.camera.zoom = 3;
 			}
-			if (FlxG.keys.pressed.Q && FlxG.camera.zoom > 0.1) {
+			if ((#if mobile _virtualpad.buttonY.pressed || #end FlxG.keys.pressed.Q) && FlxG.camera.zoom > 0.1) {
 				FlxG.camera.zoom -= elapsed * FlxG.camera.zoom;
 				if(FlxG.camera.zoom < 0.1) FlxG.camera.zoom = 0.1;
 			}
@@ -1028,12 +1068,12 @@ class CharacterEditorState extends MusicBeatState
 			}
 
 			if(char.animationsArray.length > 0) {
-				if (FlxG.keys.justPressed.W)
+				if (#if mobile _virtualpad.buttonV.justPressed || #end FlxG.keys.justPressed.W)
 				{
 					curAnim -= 1;
 				}
 
-				if (FlxG.keys.justPressed.S)
+				if (#if mobile _virtualpad.buttonD.justPressed || #end FlxG.keys.justPressed.S)
 				{
 					curAnim += 1;
 				}
@@ -1044,31 +1084,32 @@ class CharacterEditorState extends MusicBeatState
 				if (curAnim >= char.animationsArray.length)
 					curAnim = 0;
 
-				if (FlxG.keys.justPressed.S || FlxG.keys.justPressed.W || FlxG.keys.justPressed.SPACE)
+				if ((#if mobile _virtualpad.buttonD.justPressed || #end FlxG.keys.justPressed.S) || (#if mobile _virtualpad.buttonV.justPressed || #end FlxG.keys.justPressed.W) || FlxG.keys.justPressed.SPACE)
 				{
 					char.playAnim(char.animationsArray[curAnim].anim, true);
 					genBoyOffsets();
 				}
-
-				if (FlxG.keys.justPressed.R)
+				if (#if mobile _virtualpad.buttonA.justPressed || #end FlxG.keys.justPressed.T)
 				{
-					if(FlxG.keys.pressed.CONTROL) //Center
-					{
-						char.animationsArray[curAnim].offsets = [0, 0];
-						
-						char.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
-						ghostChar.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
-						genBoyOffsets();
-					}
+					char.animationsArray[curAnim].offsets = [0, 0];
+
+					char.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
+					ghostChar.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
+					genBoyOffsets();
 				}
 
-				var controlArray:Array<Bool> = [FlxG.keys.justPressed.LEFT, FlxG.keys.justPressed.RIGHT, FlxG.keys.justPressed.UP, FlxG.keys.justPressed.DOWN];
+				var controlArray:Array<Bool> = [
+					#if mobile _virtualpad.buttonLeft.justPressed || #end FlxG.keys.justPressed.LEFT, 
+					#if mobile _virtualpad.buttonRight.justPressed || #end FlxG.keys.justPressed.RIGHT, 
+					#if mobile _virtualpad.buttonUp.justPressed || #end FlxG.keys.justPressed.UP, 
+					#if mobile _virtualpad.buttonDown.justPressed || #end FlxG.keys.justPressed.DOWN
+				];
 				
 				
 				
 				for (i in 0...controlArray.length) {
 					if(controlArray[i]) {
-						var holdShift = FlxG.keys.pressed.SHIFT;
+						var holdShift = #if mobile _virtualpad.buttonC.pressed || #end FlxG.keys.pressed.SHIFT;
 						var multiplier = 1;
 						if (holdShift)
 							multiplier = 10;
@@ -1091,7 +1132,6 @@ class CharacterEditorState extends MusicBeatState
 				}
 			}
 		}
-		camMenu.zoom = FlxG.camera.zoom;
 		ghostChar.setPosition(char.x, char.y);
 		super.update(elapsed);
 	}
@@ -1166,11 +1206,15 @@ class CharacterEditorState extends MusicBeatState
 
 		if (data.length > 0)
 		{
+			#if mobile
+			StorageUtil.saveContent(daAnim + ".json", data);
+			#else
 			_file = new FileReference();
 			_file.addEventListener(Event.COMPLETE, onSaveComplete);
 			_file.addEventListener(Event.CANCEL, onSaveCancel);
 			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
 			_file.save(data, daAnim + ".json");
+			#end
 		}
 	}
 
@@ -1182,5 +1226,26 @@ class CharacterEditorState extends MusicBeatState
 
 		var text:String = prefix + Clipboard.text.replace('\n', '');
 		return text;
+	}
+
+	function onMouseEvent(e:MouseEvent):Void
+	{
+		if (_virtualpad != null)
+			switch (e.type)
+			{
+				case MouseEvent.MOUSE_DOWN:
+					var mouse = new Point(e.stageX, e.stageY); // OpenFL mouse position
+					cameraPosition.x = camFollow.x + mouse.x;
+					cameraPosition.y = camFollow.y + mouse.y;
+					isDragging = true;
+
+				case MouseEvent.MOUSE_MOVE if (isDragging):
+					var mouse = new Point(e.stageX, e.stageY);
+					camFollow.x = cameraPosition.x - mouse.x;
+					camFollow.y = cameraPosition.y - mouse.y;
+
+				case MouseEvent.MOUSE_UP:
+					isDragging = false;
+			}
 	}
 }

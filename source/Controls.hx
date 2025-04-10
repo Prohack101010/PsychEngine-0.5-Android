@@ -85,10 +85,10 @@ enum Device
 }
 
 /**
- * Since, in many cases multiple actions should use similar keys, we don't want the
- * rebinding UI to list every action. ActionBinders are what the user percieves as
- * an input so, for instance, they can't set jump-press and jump-release to different keys.
- */
+* Since, in many cases multiple actions should use similar keys, we don't want the
+* rebinding UI to list every action. ActionBinders are what the user percieves as
+* an input so, for instance, they can't set jump-press and jump-release to different keys.
+*/
 enum Control
 {
 	UI_UP;
@@ -114,9 +114,9 @@ enum KeyboardScheme
 }
 
 /**
- * A list of actions that a player would invoke via some input device.
- * Uses FlxActions to funnel various inputs to a single action.
- */
+* A list of actions that a player would invoke via some input device.
+* Uses FlxActions to funnel various inputs to a single action.
+*/
 class Controls extends FlxActionSet
 {
 	var _ui_up = new FlxActionDigital(Action.UI_UP);
@@ -379,6 +379,94 @@ class Controls extends FlxActionSet
 	}
 	#end
 
+	#if mobile
+	public var trackedInputsUI:Array<FlxActionInput> = [];
+	public var trackedInputsNOTES:Array<FlxActionInput> = [];
+
+	//I'm trying something new
+	public function addButton(action:FlxActionDigital, button:Dynamic, state:FlxInputState, notes:Bool):Void
+	{
+		if (button == null)
+			return;
+
+		var input:FlxActionInputDigitalIFlxInput = new FlxActionInputDigitalIFlxInput(button, state);
+		if (notes) trackedInputsNOTES.push(input);
+		else trackedInputsUI.push(input);
+		action.add(input);
+	}
+	
+	public function addHitboxNOTES(action:FlxActionDigital, button:Dynamic, state:FlxInputState)
+	{
+		var input = new FlxActionInputDigitalIFlxInput(button, state);
+		trackedInputsNOTES.push(input);
+		action.add(input);
+	}
+	
+	
+	public function setHitbox(Hitbox:FlxHitbox)
+	{
+		inline forEachBound(Control.NOTE_UP, (action, state) -> addHitboxNOTES(action, Hitbox.buttonUp, state));
+		inline forEachBound(Control.NOTE_DOWN, (action, state) -> addHitboxNOTES(action, Hitbox.buttonDown, state));
+		inline forEachBound(Control.NOTE_LEFT, (action, state) -> addHitboxNOTES(action, Hitbox.buttonLeft, state));
+		inline forEachBound(Control.NOTE_RIGHT, (action, state) -> addHitboxNOTES(action, Hitbox.buttonRight, state));
+	}
+
+	public function setVirtualPad(VirtualPad:FlxVirtualPad, DPad:String, Action:String, Notes:Bool):Void
+	{
+		if (VirtualPad == null)
+			return;
+
+		if (MobileData.dpadModes.exists(DPad))
+		{
+			for (buttonData in MobileData.dpadModes.get(DPad).buttons)
+			{
+				switch (buttonData.button)
+				{
+					case "buttonUp": inline forEachBound(Control.UI_UP, (action, state) -> addButton(action, VirtualPad.buttonUp, state, Notes));
+					case "buttonDown": inline forEachBound(Control.UI_DOWN, (action, state) -> addButton(action, VirtualPad.buttonDown, state, Notes));
+					case "buttonLeft": inline forEachBound(Control.UI_LEFT, (action, state) -> addButton(action, VirtualPad.buttonLeft, state, Notes));
+					case "buttonRight": inline forEachBound(Control.UI_RIGHT, (action, state) -> addButton(action, VirtualPad.buttonRight, state, Notes));
+					case "buttonUp2": inline forEachBound(Control.UI_UP, (action, state) -> addButton(action, VirtualPad.buttonUp2, state, Notes));
+					case "buttonDown2": inline forEachBound(Control.UI_DOWN, (action, state) -> addButton(action, VirtualPad.buttonDown2, state, Notes));
+					case "buttonLeft2": inline forEachBound(Control.UI_LEFT, (action, state) -> addButton(action, VirtualPad.buttonLeft2, state, Notes));
+					case "buttonRight2": inline forEachBound(Control.UI_RIGHT, (action, state) -> addButton(action, VirtualPad.buttonRight2, state, Notes));
+				}
+			}
+		}
+
+		if (MobileData.actionModes.exists(Action))
+		{
+			for (buttonData in MobileData.actionModes.get(Action).buttons)
+			{
+				switch (buttonData.button)
+				{
+					case "buttonA": inline forEachBound(Control.ACCEPT, (action, state) -> addButton(action, VirtualPad.buttonA, state, Notes));
+					case "buttonB": inline forEachBound(Control.BACK, (action, state) -> addButton(action, VirtualPad.buttonB, state, Notes));
+					case "buttonLeft": inline forEachBound(Control.UI_LEFT, (action, state) -> addButton(action, VirtualPad.buttonLeft, state, Notes));
+					case "buttonRight": inline forEachBound(Control.UI_RIGHT, (action, state) -> addButton(action, VirtualPad.buttonRight, state, Notes));
+				}
+			}
+		}
+	}
+
+	public function removeVirtualControlsInput(Tinputs:Array<FlxActionInput>):Void
+	{
+		for (action in this.digitalActions)
+		{
+			var i = action.inputs.length;
+			while (i-- > 0)
+			{
+				var x = Tinputs.length;
+				while (x-- > 0)
+				{
+					if (Tinputs[x] == action.inputs[i])
+						action.remove(action.inputs[i]);
+				}
+			}
+		}
+	}
+	#end
+
 	override function update()
 	{
 		super.update();
@@ -578,6 +666,7 @@ class Controls extends FlxActionSet
 	 * Sets all actions that pertain to the binder to trigger when the supplied keys are used.
 	 * If binder is a literal you can inline this
 	 */
+	#if !mobile
 	public function bindKeys(control:Control, keys:Array<FlxKey>)
 	{
 		var copyKeys:Array<FlxKey> = keys.copy();
@@ -609,6 +698,17 @@ class Controls extends FlxActionSet
 		forEachBound(control, function(action, _) removeKeys(action, copyKeys));
 		#end
 	}
+	#else
+	public function bindKeys(control:Control, keys:Array<FlxKey>)
+	{
+		inline forEachBound(control, (action, state) -> addKeys(action, keys, state));
+	}
+
+	public function unbindKeys(control:Control, keys:Array<FlxKey>)
+	{
+		inline forEachBound(control, (action, _) -> removeKeys(action, keys));
+	}
+	#end
 
 	inline static function addKeys(action:FlxActionDigital, keys:Array<FlxKey>, state:FlxInputState)
 	{

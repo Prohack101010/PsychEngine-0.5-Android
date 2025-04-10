@@ -87,7 +87,7 @@ class ModsMenuState extends MusicBeatState
 		noModsTxt.screenCenter();
 		visibleWhenNoMods.push(noModsTxt);
 
-		var path:String = 'modsList.txt';
+		var path:String = #if mobile Sys.getCwd() + #end 'modsList.txt';
 		if(FileSystem.exists(path))
 		{
 			var leMods:Array<String> = CoolUtil.coolTextFile(path);
@@ -98,7 +98,7 @@ class ModsMenuState extends MusicBeatState
 					if(!Paths.ignoreModFolders.contains(modSplit[0].toLowerCase()))
 					{
 						addToModsList([modSplit[0], (modSplit[1] == '1')]);
-						//trace(modSplit[1]);
+						trace(modSplit[1]);
 					}
 				}
 			}
@@ -106,7 +106,7 @@ class ModsMenuState extends MusicBeatState
 
 		// FIND MOD FOLDERS
 		var boolshit = true;
-		if (FileSystem.exists("modsList.txt")){
+		if (FileSystem.exists(#if mobile Sys.getCwd() + #end "modsList.txt")){
 			for (folder in Paths.getModDirectories())
 			{
 				if(!Paths.ignoreModFolders.contains(folder))
@@ -342,6 +342,12 @@ class ModsMenuState extends MusicBeatState
 
 		FlxG.mouse.visible = true;
 
+		#if mobile
+		if(mods.length < 1) addVirtualPad("NONE", "B");
+		else addVirtualPad("UP_DOWN", "B");
+		addVirtualPadCamera();
+		#end
+
 		super.create();
 	}
 
@@ -358,7 +364,7 @@ class ModsMenuState extends MusicBeatState
 		{
 			if(modsList[i][0] == values[0])
 			{
-				//trace(modsList[i][0], values[0]);
+				trace(modsList[i][0], values[0]);
 				return;
 			}
 		}
@@ -417,7 +423,7 @@ class ModsMenuState extends MusicBeatState
 			fileStr += values[0] + '|' + (values[1] ? '1' : '0');
 		}
 
-		var path:String = 'modsList.txt';
+		var path:String = #if mobile Sys.getCwd() + #end 'modsList.txt';
 		File.saveContent(path, fileStr);
 	}
 

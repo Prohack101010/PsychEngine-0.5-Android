@@ -29,12 +29,16 @@ using StringTools;
 
 class OptionsState extends MusicBeatState
 {
-	var options:Array<String> = ['Note Colors', 'Controls', 'Adjust Delay and Combo', 'Graphics', 'Visuals and UI', 'Gameplay'];
+	var options:Array<String> = ['Note Colors', 'Controls', 'Adjust Delay and Combo', 'Graphics', 'Visuals and UI', 'Gameplay' #if mobile , 'Mobile Options' #end];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
 	public static var menuBG:FlxSprite;
 
 	function openSelectedSubstate(label:String) {
+		#if mobile
+		persistentUpdate = false;
+	    if (label != "Adjust Delay and Combo") removeVirtualPad();
+	    #end
 		switch(label) {
 			case 'Note Colors':
 				openSubState(new options.NotesSubState());
@@ -46,6 +50,10 @@ class OptionsState extends MusicBeatState
 				openSubState(new options.VisualsUISubState());
 			case 'Gameplay':
 				openSubState(new options.GameplaySettingsSubState());
+			#if mobile
+			case 'Mobile Options':
+				openSubState(new MobileOptionsSubState());
+			#end
 			case 'Adjust Delay and Combo':
 				LoadingState.loadAndSwitchState(new options.NoteOffsetState());
 		}
@@ -83,8 +91,19 @@ class OptionsState extends MusicBeatState
 		selectorRight = new Alphabet(0, 0, '<', true, false);
 		add(selectorRight);
 
+		#if mobile
+		var tipText:FlxText = new FlxText(10, 12, 0, 'Press X to Go Mobile Controls Menu\nPress Y to Go In Extra Key Return Menu', 16);
+		tipText.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		tipText.borderSize = 2;
+		tipText.scrollFactor.set();
+		add(tipText);
+		#end
+
 		changeSelection();
 		ClientPrefs.saveSettings();
+		#if mobile
+		addVirtualPad("UP_DOWN", "A_B_X_Y");
+		#end
 
 		super.create();
 	}
@@ -92,6 +111,11 @@ class OptionsState extends MusicBeatState
 	override function closeSubState() {
 		super.closeSubState();
 		ClientPrefs.saveSettings();
+		#if mobile
+		removeVirtualPad();
+		addVirtualPad("UP_DOWN", "A_B_X_Y");
+		persistentUpdate = true;
+		#end
 	}
 
 	override function update(elapsed:Float) {
@@ -112,6 +136,20 @@ class OptionsState extends MusicBeatState
 		if (controls.ACCEPT) {
 			openSelectedSubstate(options[curSelected]);
 		}
+		
+		#if mobile
+		if (_virtualpad.buttonX.justPressed) {
+			persistentUpdate = false;
+			removeVirtualPad();
+			openSubState(new MobileControlSelectSubState());
+		}
+
+		if (_virtualpad.buttonY.justPressed) {
+			persistentUpdate = false;
+			removeVirtualPad();
+			openSubState(new MobileExtraControl());
+		}
+		#end
 	}
 	
 	function changeSelection(change:Int = 0) {

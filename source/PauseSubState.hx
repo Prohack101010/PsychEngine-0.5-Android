@@ -19,7 +19,7 @@ class PauseSubState extends MusicBeatSubstate
 	var grpMenuShit:FlxTypedGroup<Alphabet>;
 
 	var menuItems:Array<String> = [];
-	var menuItemsOG:Array<String> = ['Resume', 'Restart Song', 'Change Difficulty', 'Exit to menu'];
+	var menuItemsOG:Array<String> = ['Resume', 'Restart Song', 'Change Difficulty', #if mobile 'Chart Editor', #end 'Exit to menu'];
 	var difficultyChoices = [];
 	var curSelected:Int = 0;
 
@@ -115,6 +115,11 @@ class PauseSubState extends MusicBeatSubstate
 		changeSelection();
 
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
+
+		#if mobile
+		addVirtualPad("UP_DOWN", "A");
+		addVirtualPadCamera();
+		#end
 	}
 
 	override function update(elapsed:Float)
@@ -162,6 +167,8 @@ class PauseSubState extends MusicBeatSubstate
 				case 'Change Difficulty':
 					menuItems = difficultyChoices;
 					regenMenu();
+				case 'Chart Editor':
+					MusicBeatState.switchState(new editors.ChartingState());
 				/*case 'Toggle Practice Mode':
 					PlayState.practiceMode = !PlayState.practiceMode;
 					PlayState.usedPractice = true;

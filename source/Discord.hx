@@ -1,7 +1,9 @@
 package;
 
 import Sys.sleep;
+#if discord_rpc
 import discord_rpc.DiscordRpc;
+#end
 
 #if LUA_ALLOWED
 import llua.Lua;
@@ -14,6 +16,7 @@ class DiscordClient
 {
 	public function new()
 	{
+		#if discord_rpc
 		trace("Discord Client starting...");
 		DiscordRpc.start({
 			clientID: "863222024192262205",
@@ -31,8 +34,10 @@ class DiscordClient
 		}
 
 		DiscordRpc.shutdown();
+		#end
 	}
 	
+	#if discord_rpc
 	public static function shutdown()
 	{
 		DiscordRpc.shutdown();
@@ -96,5 +101,7 @@ class DiscordClient
 			changePresence(details, state, smallImageKey, hasStartTimestamp, endTimestamp);
 		});
 	}
+	#end
+	
 	#end
 }

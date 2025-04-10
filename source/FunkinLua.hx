@@ -37,6 +37,13 @@ import Discord;
 using StringTools;
 
 class FunkinLua {
+	#if mobile
+	public static var extra1:String = ClientPrefs.extraKeyReturn1.toUpperCase();
+	public static var extra2:String = ClientPrefs.extraKeyReturn2.toUpperCase();
+	public static var extra3:String = ClientPrefs.extraKeyReturn3.toUpperCase();
+	public static var extra4:String = ClientPrefs.extraKeyReturn4.toUpperCase();
+	#end
+
 	public static var Function_Stop = 1;
 	public static var Function_Continue = 0;
 
@@ -282,7 +289,19 @@ class FunkinLua {
 		});
 
 		Lua_helper.add_callback(lua, "getPropertyFromClass", function(classVar:String, variable:String) {
+			#if mobile
+			var myClass:Dynamic = classCheck(classVar);
+			var variableplus:String = varCheck(myClass, variable);
+			#end
 			var killMe:Array<String> = variable.split('.');
+			#if mobile
+			if (MusicBeatState.mobilec != null && myClass == 'flixel.FlxG' && variableplus.indexOf('key') != -1){
+				var check:Dynamic;
+				check = specialKeyCheck(variableplus); //fuck you old lua 🙃
+				if (check != null) return check;
+			}
+			#end
+
 			if(killMe.length > 1) {
 				var coverMeInPiss:Dynamic = Reflect.getProperty(Type.resolveClass(classVar), killMe[0]);
 				for (i in 1...killMe.length-1) {
@@ -628,6 +647,17 @@ class FunkinLua {
 				case 'reset': key = PlayState.instance.getControl('RESET');
 				case 'space': key = FlxG.keys.justPressed.SPACE;//an extra key for convinience
 			}
+			#if mobile
+			name = name.toUpperCase();
+			if (name == FunkinLua.extra1)
+				key = specialKeyCheck("keys.justPressed." + FunkinLua.extra1);
+			if (name == FunkinLua.extra2)
+				key = specialKeyCheck("keys.justPressed." + FunkinLua.extra2);
+			if (name == FunkinLua.extra3)
+				key = specialKeyCheck("keys.justPressed." + FunkinLua.extra3);
+			if (name == FunkinLua.extra4)
+				key = specialKeyCheck("keys.justPressed." + FunkinLua.extra4);
+			#end
 			return key;
 		});
 		Lua_helper.add_callback(lua, "keyPressed", function(name:String) {
@@ -639,6 +669,17 @@ class FunkinLua {
 				case 'right': key = PlayState.instance.getControl('NOTE_RIGHT');
 				case 'space': key = FlxG.keys.pressed.SPACE;//an extra key for convinience
 			}
+			#if mobile
+			name = name.toUpperCase();
+			if (name == FunkinLua.extra1)
+				key = specialKeyCheck("keys.pressed." + FunkinLua.extra1);
+			if (name == FunkinLua.extra2)
+				key = specialKeyCheck("keys.pressed." + FunkinLua.extra2);
+			if (name == FunkinLua.extra3)
+				key = specialKeyCheck("keys.pressed." + FunkinLua.extra3);
+			if (name == FunkinLua.extra4)
+				key = specialKeyCheck("keys.pressed." + FunkinLua.extra4);
+			#end
 			return key;
 		});
 		Lua_helper.add_callback(lua, "keyReleased", function(name:String) {
@@ -650,6 +691,17 @@ class FunkinLua {
 				case 'right': key = PlayState.instance.getControl('NOTE_RIGHT_R');
 				case 'space': key = FlxG.keys.justReleased.SPACE;//an extra key for convinience
 			}
+			#if mobile
+			name = name.toUpperCase();
+			if (name == FunkinLua.extra1)
+				key = specialKeyCheck("keys.released." + FunkinLua.extra1);
+			if (name == FunkinLua.extra2)
+				key = specialKeyCheck("keys.released." + FunkinLua.extra2);
+			if (name == FunkinLua.extra3)
+				key = specialKeyCheck("keys.released." + FunkinLua.extra3);
+			if (name == FunkinLua.extra4)
+				key = specialKeyCheck("keys.released." + FunkinLua.extra4);
+			#end
 			return key;
 		});
 		Lua_helper.add_callback(lua, "addCharacterToList", function(name:String, type:String) {
@@ -1409,7 +1461,117 @@ class FunkinLua {
 			luaTrace('musicFadeOut is deprecated! Use soundFadeOut instead.', false, true);
 		});
 
-		Discord.DiscordClient.addLuaCallbacks(lua);
+		#if discord_rpc Discord.DiscordClient.addLuaCallbacks(lua); #end
+
+		#if mobile
+		#if LUA_VIRTUALPAD
+		Lua_helper.add_callback(lua, 'virtualPadPressed', function(buttonPostfix:String):Bool
+		{
+			return PlayState.checkVPadPress(buttonPostfix, 'pressed');
+		});
+
+		Lua_helper.add_callback(lua, 'virtualPadJustPressed', function(buttonPostfix:String):Bool
+		{
+			return PlayState.checkVPadPress(buttonPostfix, 'justPressed');
+		});
+
+		Lua_helper.add_callback(lua, 'virtualPadReleased', function(buttonPostfix:String):Bool
+		{
+			return PlayState.checkVPadPress(buttonPostfix, 'released');
+		});
+
+		Lua_helper.add_callback(lua, 'virtualPadJustReleased', function(buttonPostfix:String):Bool
+		{
+			return PlayState.checkVPadPress(buttonPostfix, 'justReleased');
+		});
+
+		Lua_helper.add_callback(lua, 'addVirtualPad', function(DPad:String, Action:String):Void
+		{
+			PlayState.instance.makeLuaVirtualPad(DPad, Action);
+			PlayState.instance.addLuaVirtualPad();
+		});
+
+		Lua_helper.add_callback(lua, 'addVirtualPadCamera', function():Void
+		{
+			PlayState.instance.addLuaVirtualPadCamera();
+		});
+
+		Lua_helper.add_callback(lua, 'removeVirtualPad', function():Void
+		{
+			PlayState.instance.removeLuaVirtualPad();
+		});
+		#end
+
+		Lua_helper.add_callback(lua, "touchJustPressed", TouchFunctions.touchJustPressed);
+		Lua_helper.add_callback(lua, "touchPressed", TouchFunctions.touchPressed);
+		Lua_helper.add_callback(lua, "touchJustReleased", TouchFunctions.touchJustReleased);
+		#end
+
+		#if android
+		Lua_helper.add_callback(lua, "isDolbyAtmos", AndroidTools.isDolbyAtmos());
+		Lua_helper.add_callback(lua, "isAndroidTV", AndroidTools.isAndroidTV());
+		Lua_helper.add_callback(lua, "isTablet", AndroidTools.isTablet());
+		Lua_helper.add_callback(lua, "isChromebook", AndroidTools.isChromebook());
+		Lua_helper.add_callback(lua, "isDeXMode", AndroidTools.isDeXMode());
+		Lua_helper.add_callback(lua, "backJustPressed", FlxG.android.justPressed.BACK);
+		Lua_helper.add_callback(lua, "backPressed", FlxG.android.pressed.BACK);
+		Lua_helper.add_callback(lua, "backJustReleased", FlxG.android.justReleased.BACK);
+		Lua_helper.add_callback(lua, "menuJustPressed", FlxG.android.justPressed.MENU);
+		Lua_helper.add_callback(lua, "menuPressed", FlxG.android.pressed.MENU);
+		Lua_helper.add_callback(lua, "menuJustReleased", FlxG.android.justReleased.MENU);
+		Lua_helper.add_callback(lua, "getCurrentOrientation", () -> PsychJNI.getCurrentOrientationAsString());
+		Lua_helper.add_callback(lua, "setOrientation", function(hint:Null<String>):Void
+		{
+			switch (hint.toLowerCase())
+			{
+				case 'portrait':
+					hint = 'Portrait';
+				case 'portraitupsidedown' | 'upsidedownportrait' | 'upsidedown':
+					hint = 'PortraitUpsideDown';
+				case 'landscapeleft' | 'leftlandscape':
+					hint = 'LandscapeLeft';
+				case 'landscaperight' | 'rightlandscape' | 'landscape':
+					hint = 'LandscapeRight';
+				default:
+					hint = null;
+			}
+			if (hint == null)
+				return luaTrace('setOrientation: No orientation specified.');
+			PsychJNI.setOrientation(FlxG.stage.stageWidth, FlxG.stage.stageHeight, false, hint);
+		});
+		Lua_helper.add_callback(lua, "minimizeWindow", () -> AndroidTools.minimizeWindow());
+		Lua_helper.add_callback(lua, "showToast", function(text:String, duration:Null<Int>, ?xOffset:Null<Int>, ?yOffset:Null<Int>)
+		{
+			if (text == null)
+				return luaTrace('showToast: No text specified.');
+			else if (duration == null)
+				return luaTrace('showToast: No duration specified.');
+
+			if (xOffset == null)
+				xOffset = 0;
+			if (yOffset == null)
+				yOffset = 0;
+
+			AndroidToast.makeText(text, duration, -1, xOffset, yOffset);
+		});
+		Lua_helper.add_callback(lua, "isScreenKeyboardShown", () -> PsychJNI.isScreenKeyboardShown());
+
+		Lua_helper.add_callback(lua, "clipboardHasText", () -> PsychJNI.clipboardHasText());
+		Lua_helper.add_callback(lua, "clipboardGetText", () -> PsychJNI.clipboardGetText());
+		Lua_helper.add_callback(lua, "clipboardSetText", function(text:Null<String>):Void
+		{
+			if (text != null) return luaTrace('clipboardSetText: No text specified.');
+			PsychJNI.clipboardSetText(text);
+		});
+
+		Lua_helper.add_callback(lua, "manualBackButton", () -> PsychJNI.manualBackButton());
+
+		Lua_helper.add_callback(lua, "setActivityTitle", function(text:Null<String>):Void
+		{
+			if (text != null) return luaTrace('setActivityTitle: No text specified.');
+			PsychJNI.setActivityTitle(text);
+		});
+		#end
 
 		call('onCreate', []);
 		#end
@@ -1679,6 +1841,37 @@ class FunkinLua {
 	{
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
 	}
+
+	#if mobile
+	public static function varCheck(className:Dynamic, variable:String):String{
+		return variable;
+	}
+
+	public static function classCheck(className:String):Dynamic
+	{
+		return Type.resolveClass(className);
+	}
+
+	public static function specialKeyCheck(keyName:String):Dynamic
+	{
+		var textfix:Array<String> = keyName.trim().split('.');
+		var type:String = textfix[1].trim();
+		var key:String = textfix[2].trim();
+		var extraControl:Dynamic = null;
+
+		for (num in 1...5){
+			if (ClientPrefs.extraKeys >= num && key == Reflect.field(ClientPrefs, 'extraKeyReturn' + num)){
+				if (MusicBeatState.mobilec.hitbox != null)
+					extraControl = Reflect.getProperty(MusicBeatState.mobilec.hitbox, 'buttonExtra' + num);
+				else
+					extraControl = Reflect.getProperty(MusicBeatState.mobilec.vpad, 'buttonExtra' + num);
+				if (Reflect.getProperty(extraControl, type))
+					return true;
+			}
+		}
+		return null;
+	}
+	#end
 }
 
 class ModchartSprite extends FlxSprite
